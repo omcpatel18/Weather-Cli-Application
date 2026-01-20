@@ -27,6 +27,18 @@ def fetch_weatherapi(Perm_city):
     data = response.json()
     print(url)
     print(data)
+    display_weather(data)
+
+def display_weather(data):
+    """Display weather information in a formatted way"""
+    if "main" in data:
+        print("\n=== Weather Information ===")
+        print(f"Temperature: {data['main']['temp']}K")
+        print(f"Feels Like: {data['main']['feels_like']}K")
+        print(f"Humidity: {data['main']['humidity']}%")
+        print(f"Weather: {data['weather'][0]['description']}")
+    else:
+        print("Could not retrieve weather information.")
 
 if __name__ == "__main__":
     main()
