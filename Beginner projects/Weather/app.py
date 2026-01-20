@@ -5,40 +5,47 @@ from dotenv import load_dotenv
 def main():
     load_dotenv()
     try:
-        temp_city = input("Enter City name:")
-        Perm_city = temp_city.strip()
-        if Perm_city == "":
+        city = input("Enter City name:").strip()
+        if city == "":
             print("Brother you forgot to write City name.")
         else:
-            print(f"I am confirming your city name {Perm_city} ?") 
-            fetch_weatherapi(Perm_city)
+            print(f"I am confirming your city name {city} ?") 
+            geoapi(city)
     except NameError:
         print("try again")
 
-def fetch_weatherapi(Perm_city):
-    base_url = "https://api.openweathermap.org"
-    end_point = "/data/2.5/weather"
-    api_key = os.getenv("api_key")
-    if not api_key:
-        print("API key not available in environment variables.")
+def geoapi(city):
+    # First, get coordinates from city name using geocoding API
+    geo_url = "https://geocoding-api.open-meteo.com/v1/search"
+    geo_params = {
+        "name": city,
+        "count": 1,
+        "language": "en",
+        "format": "json"
+    }
+    geo_response = requests.get(geo_url, params=geo_params)
+    geo_data = geo_response.json()
+    
+    # Check if city was found
+    if "results" not in geo_data or len(geo_data["results"]) == 0:
+        print(f"City '{city}' not found.")
         return
-    url = f"{base_url}{end_point}?q={Perm_city}&appid={api_key}"
-    response = requests.get(url)
-    data = response.json()
-    print(url)
-    print(data)
-    display_weather(data)
-
-def display_weather(data):
-    """Display weather information in a formatted way"""
-    if "main" in data:
-        print("\n=== Weather Information ===")
-        print(f"Temperature: {data['main']['temp']}K")
-        print(f"Feels Like: {data['main']['feels_like']}K")
-        print(f"Humidity: {data['main']['humidity']}%")
-        print(f"Weather: {data['weather'][0]['description']}")
-    else:
-        print("Could not retrieve weather information.")
+    
+    # Extract latitude and longitude
+    latitude = geo_data["results"][0]["latitude"]
+    longitude = geo_data["results"][0]["longitude"]
+    
+    # Now get weather data using coordinates
+    weather_url = "https://api.open-meteo.com/v1/forecast"
+    weather_params = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "current": "temperature_2m,weather_code,relative_humidity_2m"
+    }
+    weather_response = requests.get(weather_url, params=weather_params)
+    weather_data = weather_response.json()
+    print(f"Weather in {city}:")
+    print(weather_data)
 
 if __name__ == "__main__":
     main()
